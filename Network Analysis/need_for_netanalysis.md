@@ -1,4 +1,3 @@
-````md
 # Network Traffic Analysis Summary
 
 ## Why do we analyze network traffic?
@@ -7,9 +6,11 @@ Logs only record **selected fields** of a packet (IP, ports, protocol, etc.).
 
 A **packet capture (PCAP)** contains the **entire packet**, including all headers and payload, making it possible to detect attacks that logs alone cannot.
 
-**Example:**
-- **Firewall Log:** `User downloaded suspicious_package.zip`
-- **PCAP:** Contains the entire ZIP file, allowing you to extract it and analyze the malware inside.
+> **Example**
+>
+> **Firewall Log:** `User downloaded suspicious_package.zip`
+>
+> **PCAP:** Contains the entire ZIP file, allowing you to extract it and analyze the malware inside.
 
 ---
 
@@ -221,6 +222,7 @@ Router
 ```
 
 The attacker can:
+
 - Intercept traffic
 - Modify packets
 - Capture credentials
@@ -268,4 +270,3 @@ The attacker can:
 # One-line Memory Trick
 
 > **Logs tell you _what happened_; PCAP tells you _exactly how it happened_.**
-````
