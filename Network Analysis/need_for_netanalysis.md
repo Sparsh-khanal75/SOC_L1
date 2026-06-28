@@ -19,17 +19,17 @@ A **packet capture (PCAP)** contains the **entire packet**, including all header
 
 ### Contains
 
-- **Application headers** → `GET /login HTTP/1.1`, `POST /upload`
-- **Actual data (Payload)** → `username=admin&password=P@ssw0rd`, `invoice.pdf`
+- **Application Headers** → `GET /login HTTP/1.1`, `POST /upload`
+- **Actual Data (Payload)** → `username=admin&password=P@ssw0rd`, `invoice.pdf`
 
-### Logs show
+### Logs Show
 
 - **URL** → `https://example.com/downloads/suspicious_package.zip`
 - **HTTP Method** → `GET`
 - **Status Code** → `200 OK`
 - **User-Agent** → `Mozilla/5.0 (Windows NT 10.0; Win64; x64)`
 
-### PCAP also shows
+### PCAP Also Shows
 
 - **Downloaded Files** → `suspicious_package.zip`
 - **Credentials** → `username=admin`, `password=P@ssw0rd`
@@ -61,13 +61,13 @@ A **packet capture (PCAP)** contains the **entire packet**, including all header
 - **Acknowledgment Number** → `Ack=2921`
 - **Window Size** → `Win=64240`
 
-### Logs show
+### Logs Show
 
 - **Source Port** → `51432`
 - **Destination Port** → `443`
 - **TCP Flags** → `SYN`
 
-Example Log
+**Example Log**
 
 ```text
 src=192.168.1.45
@@ -77,7 +77,7 @@ dport=443
 flags=SYN
 ```
 
-### PCAP also shows
+### PCAP Also Shows
 
 - **Sequence Number** → `Seq=1461`
 - **ACK Number** → `Ack=2921`
@@ -86,13 +86,13 @@ flags=SYN
 
 ### Example Attack: Session Hijacking
 
-Normal TCP Handshake
+**Normal TCP Handshake**
 
 ```text
 SYN → SYN-ACK → ACK
 ```
 
-Normal Communication
+**Normal Communication**
 
 ```text
 Seq=1
@@ -100,7 +100,7 @@ Seq=1461
 Seq=2921
 ```
 
-Attacker Packet
+**Attacker Packet**
 
 ```text
 Seq=34567232
@@ -120,17 +120,17 @@ A huge jump in the sequence number suggests an attacker is attempting to inject 
 
 - **Source IP** → `192.168.1.45`
 - **Destination IP** → `172.217.22.14`
-- **TTL** → `64`
+- **TTL (Time To Live)** → `64`
 - **Fragment Offset** → `1480`
 - **Fragment ID** → `0x1a2b`
 
-### Logs show
+### Logs Show
 
 - **Source IP** → `192.168.1.45`
 - **Destination IP** → `172.217.22.14`
 - **TTL** → `64`
 
-Example Log
+**Example Log**
 
 ```text
 src=192.168.1.45
@@ -138,16 +138,16 @@ dst=172.217.22.14
 ttl=64
 ```
 
-### PCAP also shows
+### PCAP Also Shows
 
 - **Fragment Offset** → `1480`
 - **Fragment ID** → `0x1a2b`
-- **More Fragments Flag** → `MF=1`
+- **More Fragments (MF) Flag** → `MF=1`
 - **Total Length** → `1500 bytes`
 
 ### Example Attack: Fragmentation Attack
 
-Normal Fragments
+**Normal Fragments**
 
 ```text
 Offset=0
@@ -155,7 +155,7 @@ Offset=1480
 Offset=2960
 ```
 
-Malicious Fragments
+**Malicious Fragments**
 
 ```text
 Offset=0
@@ -177,16 +177,16 @@ The overlapping fragment causes the IDS and the destination host to reconstruct 
 
 ### Contains
 
-- **Source MAC** → `00:11:22:33:44:55`
-- **Destination MAC** → `AA:BB:CC:DD:EE:FF`
+- **Source MAC Address** → `00:11:22:33:44:55`
+- **Destination MAC Address** → `AA:BB:CC:DD:EE:FF`
 - **ARP Information**
 
-### Logs show
+### Logs Show
 
 - **Source MAC** → `00:11:22:33:44:55`
 - **Destination MAC** → `AA:BB:CC:DD:EE:FF`
 
-### PCAP also shows
+### PCAP Also Shows
 
 - **ARP Request** → `Who has 192.168.1.1?`
 - **ARP Reply** → `192.168.1.1 is at 00:11:22:33:44:55`
@@ -195,14 +195,14 @@ The overlapping fragment causes the IDS and the destination host to reconstruct 
 
 ### Example Attack: ARP Poisoning (MITM)
 
-Normal ARP
+**Normal ARP**
 
 ```text
 Who has 192.168.1.1?
 192.168.1.1 is at 00:11:22:33:44:55
 ```
 
-Attacker Reply
+**Attacker Reply**
 
 ```text
 192.168.1.1 is at AA:BB:CC:DD:EE:FF
@@ -220,7 +220,11 @@ Attacker
 Router
 ```
 
-The attacker can intercept, modify, or forward the traffic.
+The attacker can:
+- Intercept traffic
+- Modify packets
+- Capture credentials
+- Forward traffic without the victim noticing
 
 **Logs:** Only show MAC addresses.
 
@@ -232,9 +236,9 @@ The attacker can intercept, modify, or forward the traffic.
 
 | Layer | Logs Show | PCAP Shows |
 |--------|-----------|------------|
-| **Application** | URL (`/downloads/file.zip`), HTTP Method (`GET`), Status (`200 OK`) | Actual payload (`file.zip`, credentials, malware) |
-| **Transport** | Ports (`51432 → 443`), TCP Flags (`SYN`) | Sequence (`Seq=1461`), ACK (`Ack=2921`), TCP stream |
-| **Internet** | Source IP (`192.168.1.45`), Destination IP (`172.217.22.14`), TTL (`64`) | Fragment Offset (`1480`), Fragment ID (`0x1a2b`) |
+| **Application** | URL (`/downloads/file.zip`), HTTP Method (`GET`), Status (`200 OK`) | Actual payload (`file.zip`), credentials, malware |
+| **Transport** | Ports (`51432 → 443`), TCP Flags (`SYN`) | Sequence (`Seq=1461`), ACK (`Ack=2921`), Window Size (`Win=64240`), TCP stream |
+| **Internet** | Source IP (`192.168.1.45`), Destination IP (`172.217.22.14`), TTL (`64`) | Fragment Offset (`1480`), Fragment ID (`0x1a2b`), MF Flag |
 | **Link** | Source/Destination MAC (`00:11:22:33:44:55`) | Complete ARP traffic, Gratuitous ARP, MAC conflicts |
 
 ---
@@ -242,10 +246,11 @@ The attacker can intercept, modify, or forward the traffic.
 # Key Takeaways
 
 - Every network packet passes through **Application → Transport → Internet → Link**.
-- Each layer adds its own header.
+- Each layer adds its own header before passing the packet to the next layer.
 - **Logs provide only a summary** of packet information.
-- **Packet captures (PCAPs) contain the complete packet**, enabling detection of advanced attacks.
-- Some attacks **cannot be detected from logs alone** because they require fields that only exist in the full packet.
+- **Packet captures (PCAPs) contain the complete packet**, including every header and payload.
+- Many attacks **cannot be detected from logs alone** because the required fields are missing.
+- Packet captures provide the evidence needed for deep investigations and forensic analysis.
 
 ---
 
@@ -253,12 +258,14 @@ The attacker can intercept, modify, or forward the traffic.
 
 | Layer | Attack | Example |
 |--------|--------|---------|
-| **Application** | Malware Delivery | Downloading `suspicious_package.zip` containing `invoice.exe` |
+| **Application** | Malware Delivery | User downloads `suspicious_package.zip` containing `invoice.exe` |
 | **Transport** | Session Hijacking | Fake packet injected with `Seq=34567232` |
 | **Internet** | Fragmentation Attack | Overlapping fragments using `Offset=1480` twice |
 | **Link** | ARP Poisoning (MITM) | Fake ARP reply: `192.168.1.1 is at AA:BB:CC:DD:EE:FF` |
 
-## One-line Memory Trick
+---
 
-> **Logs tell you what happened; PCAP tells you exactly how it happened.**
+# One-line Memory Trick
+
+> **Logs tell you _what happened_; PCAP tells you _exactly how it happened_.**
 ````
