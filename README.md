@@ -12,6 +12,10 @@ This repository documents my learning journey toward becoming a SOC Analyst.
 - Threat Hunting
 - Incident Response
 
+## Projects
+
+- 🔎 [Log Hunter](Log_Hunter/) — Python tool that hunts web attacks in Nginx/Apache access logs, detects brute-force behaviour, flags attacks that likely succeeded, and maps findings to MITRE ATT&CK
+
 ## Articles
 
 - [Understanding Endpoint Detection and Response (EDR)](EDR_explained.md)
