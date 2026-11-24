@@ -21,3 +21,7 @@ This repository documents my learning journey toward becoming a SOC Analyst.
 - [Understanding Endpoint Detection and Response (EDR)](EDR_explained.md)
 
 > These notes are created while studying cybersecurity concepts, SOC operations, and blue-team methodologies.
+
+## Author
+
+**Sparsh Khanal** · [GitHub](https://github.com/Sparsh-khanal75) · [LinkedIn](https://www.linkedin.com/in/Sparsh-khanal75)
