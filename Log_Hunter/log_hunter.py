@@ -8,6 +8,7 @@ Parses Nginx / Apache "combined" access logs and flags:
   * Directory / content brute-forcing (bursts of 404s from one IP)
   * Login brute-force (bursts of failed POSTs to auth endpoints)
   * Attack payloads that received a 2xx response (possible successful exploitation)
+  * Requests to CMS installers (Drupal Fail2Install CVE-2026-132165, WordPress, Joomla)
 
 Every finding is mapped to a MITRE ATT&CK technique and given a severity.
 Standard library only - runs anywhere Python 3.8+ is installed.
@@ -127,6 +128,17 @@ SCANNER_AGENTS = re.compile(
 )
 AUTH_PATHS = re.compile(r"/(login|signin|wp-login\.php|admin|auth|user/login|api/login)", re.I)
 
+# CMS installers that stay on disk after setup. A production site should never
+# serve them, so any hit is worth a look and a POST that gets answered is an
+# emergency. Drupal's /core/install.php is the vector for "Fail2Install"
+# (CVE-2026-132165, follow-up CVE-2026-136716): an anonymous POST can reinstall
+# the live site and take over the user 1 admin account.
+INSTALLERS = [
+    ("Drupal", re.compile(r"/core/install\.php$", re.I), "CVE-2026-132165 / CVE-2026-136716"),
+    ("WordPress", re.compile(r"/wp-admin/(install|setup-config)\.php$", re.I), None),
+    ("Joomla", re.compile(r"/installation/(index\.php)?$", re.I), None),
+]
+
 SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
 
 
@@ -186,6 +198,39 @@ class Hunter:
                            "T1595 Active Scanning", ip, events, evidence=events[0].agent[:120])
                 for (tool, ip), events in grouped.items()]
 
+    def installer_findings(self) -> List[Finding]:
+        """Requests to CMS installers, graded by whether the installer answered."""
+        grouped: dict = defaultdict(list)
+        for e in self.entries:
+            stem = e.decoded_path.split("?", 1)[0]
+            for product, pattern, cve in INSTALLERS:
+                if pattern.search(stem):
+                    grouped[(product, cve, e.ip)].append(e)
+                    break
+
+        mitre = "T1190 Exploit Public-Facing Application"
+        findings = []
+        for (product, cve, ip), events in grouped.items():
+            ref = f" ({cve})" if cve else ""
+            answered = [ev for ev in events if 200 <= ev.status < 400]
+            posts = [ev for ev in answered if ev.method == "POST"]
+            if posts:
+                # The installer accepted form data: the site may have been reinstalled
+                findings.append(self._make(
+                    f"Possible {product} Reinstall / Site Takeover{ref}", "CRITICAL", mitre, ip, posts,
+                    evidence=f"POST {posts[0].path[:80]} answered HTTP {posts[0].status} "
+                             f"- check the admin account, settings.php and new files"))
+            elif answered:
+                findings.append(self._make(
+                    f"Exposed {product} Installer{ref}", "HIGH", mitre, ip, answered,
+                    evidence=f"GET {answered[0].path[:80]} answered HTTP {answered[0].status} "
+                             f"- installer is reachable from the internet, block it"))
+            else:
+                findings.append(self._make(
+                    f"Blocked {product} Installer Probe{ref}", "LOW", mitre, ip, events,
+                    evidence=f"{len(events)} request(s) refused (HTTP {events[0].status}) - block is working"))
+        return findings
+
     # -- behaviour-based (sliding window) ----------------------------------- #
     def _burst(self, events: List[LogEntry], threshold: int) -> Optional[List[LogEntry]]:
         """Return the largest burst of events within `window` seconds, if >= threshold."""
@@ -240,7 +285,8 @@ class Hunter:
         )
 
     def run(self) -> List[Finding]:
-        findings = self.payload_findings() + self.scanner_findings() + self.bruteforce_findings()
+        findings = (self.payload_findings() + self.scanner_findings()
+                    + self.installer_findings() + self.bruteforce_findings())
         return sorted(findings, key=lambda f: (-SEVERITY_ORDER[f.severity], f.first_seen))
 
 

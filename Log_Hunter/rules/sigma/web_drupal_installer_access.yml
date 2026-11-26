@@ -1,0 +1,65 @@
+title: Drupal Installer Accessed on a Live Site (Fail2Install)
+id: 7c1d4f62-3b8e-4a51-9d0e-2f6a8c4b1e93
+status: experimental
+description: |
+  Detects requests to Drupal's /core/install.php. A production site should never serve
+  its installer. Under certain conditions an anonymous POST to it can reinstall the live
+  site and take over the user 1 admin account (CVE-2026-132165 "Fail2Install", follow-up
+  CVE-2026-136716). Exploitation was seen in the wild from 19 Nov 2026.
+references:
+  - https://www.drupal.org/node/3636972
+  - https://labs.beazley.security/advisories/BSL-A1253
+author: Sparsh Khanal
+date: 2026-11-26
+tags:
+  - attack.initial_access
+  - attack.t1190
+  - cve.2026-132165
+  - cve.2026-136716
+logsource:
+  category: webserver
+detection:
+  installer:
+    cs-uri-stem|endswith: '/core/install.php'
+  answered:
+    sc-status|startswith:
+      - '2'
+      - '3'
+  condition: installer and answered
+falsepositives:
+  - Initial installation of a new site by its administrator (should come from an admin network)
+  - Authorised vulnerability scanning
+level: high
+---
+title: Drupal Installer POST Answered (Possible Site Takeover)
+id: 0e9b2a71-6d34-4c8f-b1a5-93f7d2c6e408
+related:
+  - id: 7c1d4f62-3b8e-4a51-9d0e-2f6a8c4b1e93
+    type: derived
+status: experimental
+description: |
+  A POST to /core/install.php that the server answered with 2xx/3xx means the installer
+  accepted form data on what should be a finished site. Treat as a possible reinstall:
+  check user 1, settings.php and new PHP files.
+references:
+  - https://www.drupal.org/node/3636972
+author: Sparsh Khanal
+date: 2026-11-26
+tags:
+  - attack.initial_access
+  - attack.t1190
+  - cve.2026-132165
+  - cve.2026-136716
+logsource:
+  category: webserver
+detection:
+  selection:
+    cs-uri-stem|endswith: '/core/install.php'
+    cs-method: 'POST'
+    sc-status|startswith:
+      - '2'
+      - '3'
+  condition: selection
+falsepositives:
+  - Initial installation of a new site by its administrator
+level: critical

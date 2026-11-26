@@ -69,5 +69,40 @@ class DetectionTests(unittest.TestCase):
         self.assertIn("Brute-Force Followed by Successful Login", found)
 
 
+class InstallerTests(unittest.TestCase):
+    """Drupal Fail2Install (CVE-2026-132165) and other exposed CMS installers."""
+
+    def test_answered_installer_post_is_critical(self):
+        f = hunt([line("5.5.5.5", "00:01", "GET", "/core/install.php", 200),
+                  line("5.5.5.5", "00:02", "POST", "/core/install.php?langcode=en&profile=standard", 200)])
+        self.assertEqual(len(f), 1)
+        self.assertEqual(f[0].severity, "CRITICAL")
+        self.assertIn("CVE-2026-132165", f[0].detection)
+
+    def test_reachable_installer_is_high(self):
+        f = hunt([line("5.5.5.5", "00:01", "GET", "/core/install.php", 200)])
+        self.assertEqual([(x.detection.split(" (")[0], x.severity) for x in f],
+                         [("Exposed Drupal Installer", "HIGH")])
+
+    def test_blocked_probe_is_low(self):
+        f = hunt([line("5.5.5.5", "00:01", "POST", "/core/install.php", 403),
+                  line("5.5.5.5", "00:02", "GET", "/core/install.php", 404)])
+        self.assertEqual(f[0].severity, "LOW")
+
+    def test_subdirectory_and_encoded_paths(self):
+        f = hunt([line("5.5.5.5", "00:01", "GET", "/drupal/core/install%2Ephp?profile=minimal", 200)])
+        self.assertIn("Exposed Drupal Installer", f[0].detection)
+
+    def test_wordpress_setup_config(self):
+        f = hunt([line("5.5.5.5", "00:01", "GET", "/wp-admin/setup-config.php", 200)])
+        self.assertEqual(names(f), {"Exposed WordPress Installer"})
+
+    def test_lookalike_paths_are_ignored(self):
+        logs = [line("10.0.0.5", "00:01", "GET", "/core/install.php.html", 200),
+                line("10.0.0.5", "00:02", "GET", "/docs/core/install-guide", 200),
+                line("10.0.0.5", "00:03", "GET", "/core/misc/drupal.js", 200)]
+        self.assertEqual(hunt(logs), [])
+
+
 if __name__ == "__main__":
     unittest.main()

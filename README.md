@@ -14,7 +14,7 @@ This repository documents my learning journey toward becoming a SOC Analyst.
 
 ## Projects
 
-- 🔎 [Log Hunter](Log_Hunter/) — Python tool that hunts web attacks in Nginx/Apache access logs, detects brute-force behaviour, flags attacks that likely succeeded, and maps findings to MITRE ATT&CK
+- 🔎 [Log Hunter](Log_Hunter/) — Python tool that hunts web attacks in Nginx/Apache access logs, detects brute-force behaviour, flags attacks that likely succeeded (including Drupal "Fail2Install" CVE-2026-132165 site takeovers), and maps findings to MITRE ATT&CK, with Sigma rules
 
 ## Articles
 
