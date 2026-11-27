@@ -19,6 +19,10 @@ This repository documents my learning journey toward becoming a SOC Analyst.
 ## Articles
 
 - [Understanding Endpoint Detection and Response (EDR)](EDR_explained.md)
+- [Windows Event Log Analysis for SOC Analysts](Notes/Windows_Event_Log_Analysis.md)
+- [Threat Hunting with Sysmon](Notes/Sysmon_Threat_Hunting.md)
+- [Living Off the Land Binaries (LOLBins) and How to Detect Them](Notes/LOLBins_Detection.md)
+- [Cyber Threat Intelligence (CTI) Fundamentals](Notes/Cyber_Threat_Intelligence.md)
 
 > These notes are created while studying cybersecurity concepts, SOC operations, and blue-team methodologies.
 
