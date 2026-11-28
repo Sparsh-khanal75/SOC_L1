@@ -16,6 +16,8 @@ This repository documents my learning journey toward becoming a SOC Analyst.
 
 - 🔎 [Log Hunter](Log_Hunter/) — Python tool that hunts web attacks in Nginx/Apache access logs, detects brute-force behaviour, flags attacks that likely succeeded (including Drupal "Fail2Install" CVE-2026-132165 site takeovers), and maps findings to MITRE ATT&CK, with Sigma rules
 
+  <img src="Log_Hunter/screenshots/html-report.png" alt="Log Hunter HTML dashboard" width="720">
+
 ## Articles
 
 - [Understanding Endpoint Detection and Response (EDR)](EDR_explained.md)

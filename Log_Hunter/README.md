@@ -43,11 +43,22 @@ cd SOC_L1/Log_Hunter
 
 python log_hunter.py sample_logs/access.log                      # coloured report
 python log_hunter.py sample_logs/access.log --json report.json    # + JSON for a SIEM / ticket
+python log_hunter.py sample_logs/access.log --html report.html    # + self-contained HTML dashboard
 python log_hunter.py /var/log/nginx/access.log --window 30 --threshold 25
 python -m unittest -v                                             # run the tests
 ```
 
-No `pip install` needed — standard library only. Exit code is `2` when a CRITICAL finding exists, so it can gate a CI job or cron alert.
+No `pip install` needed. It uses only the standard library (`html_report.py` sits next to the script). Exit code is `2` when a CRITICAL finding exists, so it can gate a CI job or cron alert.
+
+## Screenshots
+
+**Terminal:** hunting the bundled sample access log.
+
+![Log Hunter terminal output](screenshots/terminal.png)
+
+**HTML report (`--html report.html`):** a self-contained dashboard with findings by detection and source IP, mapped to MITRE ATT&CK, and a findings table you can filter.
+
+![Log Hunter HTML dashboard](screenshots/html-report.png)
 
 ## Sample investigation
 
