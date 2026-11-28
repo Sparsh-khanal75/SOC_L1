@@ -104,5 +104,23 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(hunt(logs), [])
 
 
+class HtmlReportTests(unittest.TestCase):
+    def test_html_report_from_sample_log(self):
+        import os
+        import tempfile
+
+        from log_hunter import main
+
+        here = os.path.dirname(os.path.abspath(__file__))
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "report.html")
+            main([os.path.join(here, "sample_logs", "access.log"), "--html", out, "--no-color"])
+            with open(out, encoding="utf-8") as fh:
+                page = fh.read()
+        self.assertIn("Web access-log hunt", page)
+        self.assertIn("Brute-Force Followed by Successful Login", page)
+        self.assertNotIn("<script>alert(document.cookie)", page)  # payloads are escaped
+
+
 if __name__ == "__main__":
     unittest.main()
