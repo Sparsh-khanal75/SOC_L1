@@ -16,6 +16,7 @@ Standard library only - runs anywhere Python 3.8+ is installed.
 Usage:
     python log_hunter.py sample_logs/access.log
     python log_hunter.py access.log --json report.json --csv report.csv
+    python log_hunter.py access.log --html report.html      # self-contained HTML dashboard
     python log_hunter.py access.log --window 60 --threshold 20
 """
 
@@ -353,6 +354,47 @@ def write_csv(path: str, findings: List[Finding]) -> None:
             writer.writerow(row)
 
 
+def write_html(path: str, entries: List[LogEntry], findings: List[Finding], source: str) -> None:
+    """Self-contained HTML dashboard (html_report.py sits next to this file)."""
+    from html_report import Report, write
+
+    attackers = Counter(f.ip for f in findings)
+    write(
+        Report(
+            tool="Log Hunter",
+            title="Web access-log hunt",
+            subtitle="Attack payloads, offensive tooling, brute force and likely-successful exploitation",
+            meta={"source": source, "time range": f"{entries[0].time:%Y-%m-%d %H:%M} to {entries[-1].time:%H:%M}"},
+            kpis=[
+                ("requests", len(entries), "acc"),
+                ("unique IPs", len({e.ip for e in entries}), "acc"),
+                ("4xx/5xx responses", sum(e.status >= 400 for e in entries), "warn"),
+                ("attacking IPs", len(attackers), "warn"),
+                ("critical", sum(f.severity == "CRITICAL" for f in findings), "bad"),
+            ],
+            charts=[
+                ("Findings by detection", Counter(f.detection for f in findings).most_common(8)),
+                ("Findings by source IP", attackers.most_common(8)),
+            ],
+            columns=["detection", "ip", "technique", "count", "time", "evidence"],
+            rows=[
+                {
+                    "severity": f.severity.lower(),
+                    "detection": f.detection,
+                    "ip": f.ip,
+                    "technique": f.mitre.split()[0],
+                    "count": f.count,
+                    "time": f.first_seen[11:19],
+                    "evidence": f.evidence[:140],
+                }
+                for f in findings
+            ],
+            empty_message="No attacks found.",
+        ),
+        path,
+    )
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description="Hunt for attacks in Nginx/Apache access logs.")
     ap.add_argument("logfile", help="Path to access log (combined format)")
@@ -361,6 +403,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--auth-threshold", type=int, default=10, help="Auth POSTs per window for login brute-force")
     ap.add_argument("--json", help="Write findings to a JSON file")
     ap.add_argument("--csv", help="Write findings to a CSV file")
+    ap.add_argument("--html", help="Write a self-contained HTML dashboard")
     ap.add_argument("--no-color", action="store_true", help="Disable coloured output")
     args = ap.parse_args(argv)
 
@@ -380,6 +423,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.csv:
         write_csv(args.csv, findings)
         print(f"CSV report written to {args.csv}")
+    if args.html:
+        write_html(args.html, hunter.entries, findings, args.logfile)
+        print(f"HTML report written to {args.html}")
     return 2 if any(f.severity == "CRITICAL" for f in findings) else 0
 
 
